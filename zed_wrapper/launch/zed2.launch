@@ -52,4 +52,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
             <arg name="cam_yaw"             value="$(arg cam_yaw)" />
         </include>
     </group>
+
+    <node pkg="tf" type="static_transform_publisher" name="zed_link" args="0.465 0.021 0.2 0 0 0 base_link zed_base_link 100" />
+
 </launch>
