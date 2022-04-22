@@ -139,7 +139,7 @@ void ZEDWrapperNodelet::onInit()
 
     string object_det_topic_root = "obj_det";
     string object_det_topic = object_det_topic_root + "/objects";
-    string object_det_odom_topic = object_det_topic_root + "/odom"
+    string object_det_odom_topic = object_det_topic_root + "/odom";
     std::string confImgRoot = "confidence";
     string conf_map_topic_name = "confidence_map";
     string conf_map_topic = confImgRoot + "/" + conf_map_topic_name;
@@ -1401,7 +1401,7 @@ bool ZEDWrapperNodelet::start_obj_detect()
     if (mPubObjDet.getTopic().empty()) {
         string object_det_topic_root = "obj_det";
         string object_det_topic = object_det_topic_root + "/objects";
-        string object_det_odom_topic = object_det_topic_root + "/odom"
+        string object_det_odom_topic = object_det_topic_root + "/odom";
         mPubObjDet = mNhNs.advertise<zed_interfaces::ObjectsStamped>(object_det_topic, 1);
         mPubOdomObj = mNhNs.advertise<nav_msgs::Odometry>(object_det_odom_topic, 1);
         NODELET_INFO_STREAM("Advertised on topic " << mPubObjDet.getTopic());
