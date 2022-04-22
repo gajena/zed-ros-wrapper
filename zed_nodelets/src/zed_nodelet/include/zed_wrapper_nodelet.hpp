@@ -722,6 +722,7 @@ private:
   sl::DETECTION_MODEL mObjDetModel = sl::DETECTION_MODEL::MULTI_CLASS_BOX;
 
   ros::Publisher mPubObjDet;
+  ros::Publisher mPubOdomObj;
 };  // class ZEDROSWrapperNodelet
 }  // namespace zed_nodelets
 
