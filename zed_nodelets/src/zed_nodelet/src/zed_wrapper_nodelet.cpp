@@ -139,7 +139,7 @@ void ZEDWrapperNodelet::onInit()
 
     string object_det_topic_root = "obj_det";
     string object_det_topic = object_det_topic_root + "/objects";
-
+    string object_det_odom_topic = object_det_topic_root + "/odom";
     std::string confImgRoot = "confidence";
     string conf_map_topic_name = "confidence_map";
     string conf_map_topic = confImgRoot + "/" + conf_map_topic_name;
@@ -457,6 +457,7 @@ void ZEDWrapperNodelet::onInit()
     // Object detection publishers
     if (mObjDetEnabled) {
         mPubObjDet = mNhNs.advertise<zed_interfaces::ObjectsStamped>(object_det_topic, 1);
+        mPubOdomObj = mNhNs.advertise<nav_msgs::Odometry>(object_det_odom_topic, 1);
         NODELET_INFO_STREAM("Advertised on topic " << mPubObjDet.getTopic());
     }
 
@@ -1400,8 +1401,9 @@ bool ZEDWrapperNodelet::start_obj_detect()
     if (mPubObjDet.getTopic().empty()) {
         string object_det_topic_root = "obj_det";
         string object_det_topic = object_det_topic_root + "/objects";
-
+        string object_det_odom_topic = object_det_topic_root + "/odom";
         mPubObjDet = mNhNs.advertise<zed_interfaces::ObjectsStamped>(object_det_topic, 1);
+        mPubOdomObj = mNhNs.advertise<nav_msgs::Odometry>(object_det_odom_topic, 1);
         NODELET_INFO_STREAM("Advertised on topic " << mPubObjDet.getTopic());
     }
 
@@ -4301,8 +4303,11 @@ void ZEDWrapperNodelet::processDetectedObjects(ros::Time t)
     size_t objCount = objects.object_list.size();
 
     zed_interfaces::ObjectsStampedPtr objMsg = boost::make_shared<zed_interfaces::ObjectsStamped>();
+    nav_msgs::OdometryPtr objOdom = boost::make_shared<nav_msgs::Odometry>();
     objMsg->header.stamp = t;
     objMsg->header.frame_id = mLeftCamFrameId;
+    objOdom->header = objMsg->header;
+    objOdom->child_frame_id = mLeftCamFrameId;
 
     objMsg->objects.resize(objCount);
 
@@ -4314,9 +4319,16 @@ void ZEDWrapperNodelet::processDetectedObjects(ros::Time t)
         objMsg->objects[idx].confidence = data.confidence;
 
         memcpy(&(objMsg->objects[idx].position[0]), &(data.position[0]), 3 * sizeof(float));
-        memcpy(&(objMsg->objects[idx].position_covariance[0]), &(data.position_covariance[0]), 6 * sizeof(float));
+        objOdom->pose.pose.position.x = data.position[0];
+        objOdom->pose.pose.position.y = data.position[1];
+        objOdom->pose.pose.position.z = data.position[2];
+        memcpy(&(objMsg->objects[idx].position_covariance[0]),
+            &(data.position_covariance[0]),
+            6 * sizeof(float));
         memcpy(&(objMsg->objects[idx].velocity[0]), &(data.velocity[0]), 3 * sizeof(float));
-
+        objOdom->twist.twist.linear.x = data.velocity[0];
+        objOdom->twist.twist.linear.y = data.velocity[1];
+        objOdom->twist.twist.linear.z = data.velocity[2];
         objMsg->objects[idx].tracking_available = mObjDetTracking;
         objMsg->objects[idx].tracking_state = static_cast<int8_t>(data.tracking_state);
         // NODELET_INFO_STREAM( "[" << idx << "] Tracking: " <<
@@ -4357,6 +4369,7 @@ void ZEDWrapperNodelet::processDetectedObjects(ros::Time t)
 
         // at the end of the loop
         idx++;
+        mPubOdomObj.publish(objOdom);
     }
 
     mPubObjDet.publish(objMsg);
